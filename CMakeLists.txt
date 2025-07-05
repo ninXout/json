@@ -36,6 +36,8 @@ else()
     target_link_libraries(mat-json PUBLIC GeodeResult)
 endif()
 
+target_compile_definitions(mat-json PUBLIC INCLUDE_REFLECTION)
+
 if (PROJECT_IS_TOP_LEVEL)
     if (NOT WIN32)
         add_compile_options("$<$<CONFIG:DEBUG>:-fsanitize=address,undefined>")

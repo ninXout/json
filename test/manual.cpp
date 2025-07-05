@@ -1,7 +1,10 @@
 #include <fmt/core.h>
 #include <fstream>
 #include <matjson.hpp>
+
+#ifdef INCLUDE_REFLECTION
 #include <matjson/reflect.hpp>
+#endif
 
 using namespace geode;
 
@@ -15,6 +18,42 @@ struct Foo {
     double height;
     Bar bar;
 };
+
+#ifndef INCLUDE_REFLECTION
+
+template <>
+struct matjson::Serialize<Bar> {
+    static geode::Result<Bar> fromJson(const matjson::Value& value) {
+        GEODE_UNWRAP_INTO(int x, value["x"].asInt());
+        return geode::Ok(Bar { x });
+    }
+    static matjson::Value toJson(const Bar& bar) {
+        return matjson::makeObject({
+            { "x", bar.x }
+        });
+    }
+};
+
+template <>
+struct matjson::Serialize<Foo> {
+    static geode::Result<Foo> fromJson(const matjson::Value& value) {
+        GEODE_UNWRAP_INTO(std::string name, value["name"].asString());
+        GEODE_UNWRAP_INTO(int age, value["age"].asInt());
+        GEODE_UNWRAP_INTO(double height, value["height"].asDouble());
+        GEODE_UNWRAP_INTO(Bar bar, value["bar"].as<Bar>());
+        return geode::Ok(Foo { name, age, height, bar });
+    }
+    static matjson::Value toJson(const Foo& foo) {
+        return matjson::makeObject({
+            { "name", foo.name },
+            { "age", foo.age },
+            { "height", foo.height },
+            { "bar", foo.bar }
+        });
+    }
+};
+
+#endif
 
 Result<void> fancyMain(int argc, char const* argv[]) {
     {

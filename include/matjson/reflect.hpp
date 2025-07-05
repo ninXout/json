@@ -1,5 +1,7 @@
 #pragma once
 
+#ifdef INCLUDE_REFLECTION
+
 #include "external/reflect"
 
 #include <matjson.hpp>
@@ -47,3 +49,5 @@ struct matjson::Serialize<T> {
         return json;
     }
 };
+
+#endif

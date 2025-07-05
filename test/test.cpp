@@ -4,9 +4,12 @@
 #include <catch2/matchers/catch_matchers_all.hpp>
 #include <map>
 #include <matjson.hpp>
-#include <matjson/reflect.hpp>
 #include <matjson/std.hpp>
 #include <unordered_map>
+
+#ifdef INCLUDE_REFLECTION
+#include <matjson/reflect.hpp>
+#endif
 
 struct CoolStruct {
     std::string name;
@@ -14,6 +17,25 @@ struct CoolStruct {
 
     bool operator==(CoolStruct const&) const = default;
 };
+
+#ifndef INCLUDE_REFLECTION
+
+template <>
+struct matjson::Serialize<CoolStruct> {
+    static geode::Result<CoolStruct> fromJson(const matjson::Value& value) {
+        GEODE_UNWRAP_INTO(std::string name, value["name"].asString());
+        GEODE_UNWRAP_INTO(int val, value["value"].asInt());
+        return geode::Ok(CoolStruct { name, val });
+    }
+    static matjson::Value toJson(const CoolStruct& cs) {
+        return matjson::makeObject({
+            { "name", cs.name },
+            { "value", cs.value }
+        });
+    }
+};
+
+#endif
 
 using namespace geode;
 using namespace matjson;
@@ -363,8 +385,8 @@ TEST_CASE("Implicit ctors") {
     value["a"] = baz;
 
     struct Test {
-        operator std::string() {
-            return "hi";
+        operator matjson::Value() const { // this is definitely not what mat wanted but idc it wasn't compiling :D
+            return matjson::Value("hi");
         }
     } t;
 
